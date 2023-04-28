@@ -51,57 +51,54 @@
         document.getElementById('btn_audio').play(); //クリックしたら音を再生
     }
 
-
-
-
         Vue.createApp({
-            data() {
-                return {
-                    video: null,
-                    canvas: null,
-                    context: null,
-                    dataUrl: '',
-                    status: 'none'
-                }
-            },
-            methods: {
-                // ① カメラとキャンバスの準備
-                initialize() {
-
-                    this.status = 'initialize';
-
-                    navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: {
-                                ideal: 'environment'
-                            }
-                        }
-                    })
-                    .then(stream => {
-
-                        this.canvas = this.$refs.canvas;
-                        this.context = this.canvas.getContext('2d');
-
-                        this.video = document.createElement('video');
-                        this.video.addEventListener('loadedmetadata', () => { // メタデータが取得できるようになったら実行
-
-                            const canvasContainer = this.$refs['canvas-container'];
-                            this.canvas.width = canvasContainer.offsetWidth;
-                            this.canvas.height = parseInt(this.canvas.width * this.video.videoHeight / this.video.videoWidth);
-                            this.render();
-
-                        });
-                        // iOSのために以下３つの設定が必要
-                        this.video.setAttribute('autoplay', '');
-                        this.video.setAttribute('muted', '');
-                        this.video.setAttribute('playsinline', '');
-                        this.video.srcObject = stream;
-                        this.playVideo();
-
-                    })
-                    .catch(error => console.log(error));
-
+                data() {
+                    return {
+                        video: null,
+                        canvas: null,
+                        context: null,
+                        dataUrl: '',
+                        status: 'none'
+                    }
                 },
+                methods: {
+                    // ① カメラとキャンバスの準備
+                    initialize() {
+
+                        this.status = 'initialize';
+
+                        navigator.mediaDevices.getUserMedia({
+                            video: {
+                                facingMode: {
+                                    ideal: 'environment'
+                                }
+                            }
+                        })
+                        .then(stream => {
+
+                            this.canvas = this.$refs.canvas;
+                            this.context = this.canvas.getContext('2d');
+
+                            this.video = document.createElement('video');
+                            this.video.addEventListener('loadedmetadata', () => { // メタデータが取得できるようになったら実行
+
+                                const canvasContainer = this.$refs['canvas-container'];
+                                this.canvas.width = canvasContainer.offsetWidth;
+                                this.canvas.height = parseInt(this.canvas.width * this.video.videoHeight / this.video.videoWidth);
+                                this.render();
+
+                            });
+                            // iOSのために以下３つの設定が必要
+                            this.video.setAttribute('autoplay', '');
+                            this.video.setAttribute('muted', '');
+                            this.video.setAttribute('playsinline', '');
+                            this.video.srcObject = stream;
+                            this.playVideo();
+
+                        })
+                        .catch(error => console.log(error));
+
+                    },
                 render() {
 
                     if(this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
