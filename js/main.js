@@ -44,48 +44,6 @@ function deviceCount() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function (event) {
-  // check if mediaDevices is supported
-  if (
-    navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia &&
-    navigator.mediaDevices.enumerateDevices
-  ) {
-    // first we call getUserMedia to trigger permissions
-    // we need this before deviceCount, otherwise Safari doesn't return all the cameras
-    // we need to have the number in order to display the switch front/back button
-    navigator.mediaDevices
-      .getUserMedia({
-        audio: false,
-        video: true,
-      })
-      .then(function (stream) {
-        stream.getTracks().forEach(function (track) {
-          track.stop();
-        });
-
-        deviceCount().then(function (deviceCount) {
-          amountOfCameras = deviceCount;
-
-          // init the UI and the camera stream
-          initCameraUI();
-          initCameraStream();
-        });
-      })
-      .catch(function (error) {
-        //https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-        if (error === 'PermissionDeniedError') {
-          alert('Permission denied. Please refresh and give permission.');
-        }
-
-        console.error('getUserMedia() error: ', error);
-      });
-  } else {
-    alert(
-      'Mobile camera is not supported by browser, or there is no camera detected/connected',
-    );
-  }
-});
 
 function initCameraUI() {
   video = document.getElementById('video');
@@ -149,58 +107,6 @@ function initCameraUI() {
   );
 }
 
-// https://github.com/webrtc/samples/blob/gh-pages/src/content/devices/input-output/js/main.js
-function initCameraStream() {
-  // stop any active streams in the window
-  if (window.stream) {
-    window.stream.getTracks().forEach(function (track) {
-      console.log(track);
-      track.stop();
-    });
-  }
-
-  // we ask for a square resolution, it will cropped on top (landscape)
-  // or cropped at the sides (landscape)
-  var size = 1280;
-
-  var constraints = {
-    audio: false,
-    video: {
-      width: { ideal: size },
-      height: { ideal: size },
-      //width: { min: 1024, ideal: window.innerWidth, max: 1920 },
-      //height: { min: 776, ideal: window.innerHeight, max: 1080 },
-      facingMode: currentFacingMode,
-    },
-  };
-
-  navigator.mediaDevices
-    .getUserMedia(constraints)
-    .then(handleSuccess)
-    .catch(handleError);
-
-  function handleSuccess(stream) {
-    window.stream = stream; // make stream available to browser console
-    video.srcObject = stream;
-
-    if (constraints.video.facingMode) {
-      if (constraints.video.facingMode === 'environment') {
-        switchCameraButton.setAttribute('aria-pressed', true);
-      } else {
-        switchCameraButton.setAttribute('aria-pressed', false);
-      }
-    }
-
-    const track = window.stream.getVideoTracks()[0];
-    const settings = track.getSettings();
-    str = JSON.stringify(settings, null, 4);
-    console.log('settings ' + str);
-  }
-
-  function handleError(error) {
-    console.error('getUserMedia() error: ', error);
-  }
-}
 
 function takeSnapshot() {
   // if you'd like to show the canvas add it to the DOM
