@@ -72,7 +72,7 @@ button {
   top: calc(50% - 40px);
   width: 80px;
   height: 80px;
-  background-image: url('img/scan.svg');
+  background-image: url('img/play.svg');
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.5);
 }
@@ -82,7 +82,7 @@ button {
   top: calc(50% - 40px);
   width: 80px;
   height: 80px;
-  background-image: url('img/load.svg');
+  background-image: url('img/pros.svg');
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.5);
 }
