@@ -104,7 +104,6 @@ button {
 }
 
 #switchCameraButton {
-  display: none;
   width: 64px;
   height: 64px;
   background-image: url('img/ic_camera_rear_white_36px.svg');
