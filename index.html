@@ -1,0 +1,190 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1"
+    />
+    <title>虫食いカメラ</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="app">
+      <div id="container">
+        <audio id="btn_audio" hidden>
+          <source src="./snd/scan.mp3" type="audio/mp3">
+        </audio>
+        <div id="vid_container" ref="canvas-container">
+          <canvas ref="canvas"></canvas>
+          <div id="video_overlay"></div>
+        </div>
+        <div id="gui_controls">
+          <button
+            id="switchCameraButton"
+            name="switch Camera"
+            type="button"
+            aria-pressed="false"
+          ></button>
+          <button id="takePhotoButton" name="take Photo" type="button" @click="takeSnapshot" v-if="status=='play'"></button>
+          <button id="takePhotoButton2" name="take Photo" type="button" @click="runOcr" v-if="status=='pause'" onclick="audio()"></button>
+          <button id="load" name="take Photo" v-if="status=='reading'"></button>
+          <button id="toggleFullScreenButton" v-if="status=='reading'"></button>
+          <button
+            id="toggleFullScreenButton"
+            @click="playVideo"
+            v-if="status=='pause'"
+          ></button>
+        </div>
+      </div>
+    </div>
+    <script src="js/adapter.min.js"></script>
+    <script src="js/screenfull.min.js"></script>
+    <script src="js/howler.core.min.js"></script>
+    <script src="js/main.js"></script>
+    <!-- ① CDNでJavaScriptを読み込み -->
+     <script src="https://unpkg.com/vue@3.0.0/dist/vue.global.prod.js"></script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <script>
+      function audio() {
+        document.getElementById('btn_audio').currentTime = 0; //連続クリックに対応
+        document.getElementById('btn_audio').play(); //クリックしたら音を再生
+    }
+
+
+
+
+        Vue.createApp({
+            data() {
+                return {
+                    video: null,
+                    canvas: null,
+                    context: null,
+                    dataUrl: '',
+                    status: 'none'
+                }
+            },
+            methods: {
+                // ① カメラとキャンバスの準備
+                initialize() {
+
+                    this.status = 'initialize';
+
+                    navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: {
+                                ideal: 'environment'
+                            }
+                        }
+                    })
+                    .then(stream => {
+
+                        this.canvas = this.$refs.canvas;
+                        this.context = this.canvas.getContext('2d');
+
+                        this.video = document.createElement('video');
+                        this.video.addEventListener('loadedmetadata', () => { // メタデータが取得できるようになったら実行
+
+                            const canvasContainer = this.$refs['canvas-container'];
+                            this.canvas.width = canvasContainer.offsetWidth;
+                            this.canvas.height = parseInt(this.canvas.width * this.video.videoHeight / this.video.videoWidth);
+                            this.render();
+
+                        });
+                        // iOSのために以下３つの設定が必要
+                        this.video.setAttribute('autoplay', '');
+                        this.video.setAttribute('muted', '');
+                        this.video.setAttribute('playsinline', '');
+                        this.video.srcObject = stream;
+                        this.playVideo();
+
+                    })
+                    .catch(error => console.log(error));
+
+                },
+                render() {
+
+                    if(this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+
+                        this.context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+
+                    }
+
+                    requestAnimationFrame(this.render);
+
+                },
+                runOcr() { // ③ スナップショットからテキストを抽出
+
+                    this.status = 'reading';
+
+                    Tesseract.recognize(this.dataUrl, 'eng+jpn', {
+                        logger: log => {
+
+                            console.log(log);
+
+                        }
+                    })
+                    .then(result => {
+                        const resultText = result.data.text;
+                        const regex = /\(([^)]+)\)/g; // 正規表現でかっこの中身を取得
+                        const resultWithoutParentheses = resultText.replace(regex, '(         )'); // かっこの中身を消す
+                        alert(resultWithoutParentheses);
+                    })
+                    .catch(error => console.log(error))
+                    .finally(() => {
+
+                        this.playVideo();
+
+                    });
+
+                },
+                playVideo() {
+
+                    this.video.play();
+                    this.status = 'play';
+
+                },
+                pauseVideo() {
+
+                    this.video.pause();
+                    this.status = 'pause';
+
+                },
+                takeSnapshot() { // ② スナップショットを取る（カメラは一時停止）
+                    this.context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    // this.makeSound(); // 音を鳴らす
+                    this.pauseVideo();
+                    this.dataUrl = this.canvas.toDataURL();
+                },
+                handleFileInput(event) {
+                    const file = event.target.files[0];
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        this.dataUrl = reader.result;
+                    };
+                },
+                makeSound() { // ④ おまけ：スナップショットをとるときに音をならす
+
+                    document.querySelectorAll('.notification-iframe').forEach(el => el.remove()); // 全ての通知用 iFrame を削除
+
+                    // soundタグは使わず iFrame で直接音声ファイルへアクセスする
+                    const iFrame = document.createElement('iframe');
+                    iFrame.setAttribute('src', '/audios/insight.ogg');
+                    iFrame.setAttribute('allow', 'autoplay');
+                    iFrame.style.display = 'none';
+                    iFrame.className = 'notification-iframe';
+                    document.body.appendChild(iFrame);
+
+                }
+            },
+            mounted() {
+
+                this.initialize();
+
+            }
+        }).mount('#app');
+
+    </script>
+  </body>
+</html>
