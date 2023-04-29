@@ -25,11 +25,11 @@
             name="switch Camera"
             type="button"
             aria-pressed="false"
+            v-if="status=='play'"
           ></button>
           <button id="takePhotoButton" name="take Photo" type="button" @click="takeSnapshot" v-if="status=='play'"></button>
           <button id="takePhotoButton2" name="take Photo" type="button" @click="runOcr" v-if="status=='pause'" onclick="audio()"></button>
           <button id="load" name="take Photo" v-if="status=='reading'"></button>
-          <button id="toggleFullScreenButton" v-if="status=='reading'"></button>
           <button
             id="toggleFullScreenButton"
             @click="playVideo"
