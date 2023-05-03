@@ -21,6 +21,15 @@
           <canvas ref="canvas"></canvas>
           <div id="video_overlay"></div>
         </div>
+        <div id="js-modal" class="modal-overlay">
+            <div class="modal">
+              <div class="modal-cnt">
+                <span class="modal-title">虫食い問題</span>
+                <span id="js-result" class="modal-result"></span>
+              </div>
+              <button type="button" id="js-modal-close" class="modal-btn" onclick="closeModal()">閉じる</button>
+            </div>
+         </div>
         <div id="gui_controls">
           <button id="takePhotoButton" name="take Photo" type="button" @click="takeSnapshot" v-if="status=='play'"></button>
           <button id="takePhotoButton2" name="take Photo" type="button" @click="runOcr" v-if="status=='pause'" onclick="audio()"></button>
@@ -44,6 +53,14 @@
       function audio() {
         document.getElementById('btn_audio').currentTime = 0; //連続クリックに対応
         document.getElementById('btn_audio').play(); //クリックしたら音を再生
+    }
+      const openModal = function(resultWithoutParentheses) {
+        document.querySelector('#js-result').innerText = resultWithoutParentheses
+        document.querySelector('#js-modal').classList.add('is-show')
+    }
+
+      function closeModal() {
+          document.querySelector('#js-modal').classList.remove('is-show')
     }
 
         Vue.createApp({
